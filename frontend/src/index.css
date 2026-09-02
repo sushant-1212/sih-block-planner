@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* React Flow customizations */
+.react-flow__pane {
+  cursor: grab;
+}
+.react-flow__pane:active {
+  cursor: grabbing;
+}
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Hazard stripe pattern for blocked tracks */
+.hazard-stripe {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(239, 68, 68, 0.2),
+    rgba(239, 68, 68, 0.2) 10px,
+    rgba(239, 68, 68, 0.4) 10px,
+    rgba(239, 68, 68, 0.4) 20px
+  );
+}
+
+/* Glowing route styles */
+@keyframes trainGlow {
+  0% {
+    filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 1));
+  }
+  100% {
+    filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.7));
+  }
+}
+
+.active-route-glow {
+  animation: trainGlow 2s ease-in-out infinite;
+}
