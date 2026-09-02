@@ -8,11 +8,13 @@ const { LRUCache, routeCache } = require('../cache/lruCache');
 /**
  * Helper to compute baseline route with zero blocks
  */
-function getBaselineRoute(source = 1, target = 4) {
+function getBaselineRoute(source, target) {
   const nodes = db.getNodes();
   const edges = db.getEdges();
   const graph = new RailwayGraph(nodes, edges);
-  return findShortestRoute(graph, Number(source), Number(target), []);
+  const src = source !== undefined ? Number(source) : (nodes[0]?.id || 101);
+  const tgt = target !== undefined ? Number(target) : (nodes[nodes.length - 1]?.id || 107);
+  return findShortestRoute(graph, src, tgt, []);
 }
 
 /**
@@ -25,10 +27,11 @@ router.get('/network', (req, res) => {
     const edges = db.getEdges();
     const blockedEdgeIds = db.getBlockedEdgeIds();
     const maintenance = db.getMaintenanceRequests();
-    const baseline = getBaselineRoute(1, 4);
+    const baseline = getBaselineRoute();
 
     res.json({
       success: true,
+      currentDataset: db.getDatasetName(),
       nodes,
       edges,
       blockedEdgeIds,
@@ -47,8 +50,11 @@ router.get('/network', (req, res) => {
  */
 router.post('/reroute', (req, res) => {
   try {
-    const source = Number(req.body.source || 1);
-    const target = Number(req.body.target || 4);
+    const nodes = db.getNodes();
+    const defaultSrc = nodes[0]?.id || 101;
+    const defaultTgt = nodes[nodes.length - 1]?.id || 107;
+    const source = Number(req.body.source || defaultSrc);
+    const target = Number(req.body.target || defaultTgt);
     
     // Accept blocked edges from body or from database state
     const blockedEdgeIds = Array.isArray(req.body.blocked_edge_ids)
@@ -57,6 +63,7 @@ router.post('/reroute', (req, res) => {
 
     const cacheKey = LRUCache.generateKey(source, target, blockedEdgeIds);
     const startLookupTime = process.hrtime.bigint();
+
 
     // 1. Check LRU Cache
     const cachedResult = routeCache.get(cacheKey);
