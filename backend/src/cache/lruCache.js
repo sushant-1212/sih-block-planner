@@ -147,6 +147,7 @@ class LRUCache {
     this.stats.misses = 0;
     this.stats.evictions = 0;
     this.stats.totalRequests = 0;
+    this.stats.savedComputeTimeMs = 0;
   }
 
   /**
