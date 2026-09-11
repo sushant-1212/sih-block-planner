@@ -6,7 +6,7 @@ export async function fetchNetwork() {
   return res.json();
 }
 
-export async function calculateReroute(source = 1, target = 4, blockedEdgeIds = []) {
+export async function calculateReroute(source = 101, target = 107, blockedEdgeIds = []) {
   const res = await fetch(`${API_BASE}/reroute`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -17,6 +17,25 @@ export async function calculateReroute(source = 1, target = 4, blockedEdgeIds = 
     })
   });
   if (!res.ok) throw new Error(`Reroute calculation failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function synthesizeSchedule(maintenanceRequests = null, blockedEdgeIds = []) {
+  const res = await fetch(`${API_BASE}/synthesize-schedule`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      maintenanceRequests,
+      blockedEdgeIds
+    })
+  });
+  if (!res.ok) throw new Error(`Synthesize schedule failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchFleetSchedule() {
+  const res = await fetch(`${API_BASE}/fleet-schedule`);
+  if (!res.ok) throw new Error(`Fetch fleet schedule failed: ${res.statusText}`);
   return res.json();
 }
 
@@ -64,7 +83,7 @@ export async function applyMaintenanceScenario(maintenanceId) {
   return res.json();
 }
 
-export async function switchDataset(dataset = 'demo') {
+export async function switchDataset(dataset = 'real_ir') {
   const res = await fetch(`${API_BASE}/switch-dataset`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -73,4 +92,3 @@ export async function switchDataset(dataset = 'demo') {
   if (!res.ok) throw new Error(`Switch dataset failed: ${res.statusText}`);
   return res.json();
 }
-

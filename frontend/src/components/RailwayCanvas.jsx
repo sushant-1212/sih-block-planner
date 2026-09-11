@@ -58,6 +58,8 @@ const RailwayCanvas = ({
           name: node.name,
           code: node.code,
           type: node.type,
+          capacity: node.capacity !== undefined ? node.capacity : 4,
+          occupied: node.occupied !== undefined ? node.occupied : 0,
           isSource,
           isTarget,
           isOnActiveRoute,

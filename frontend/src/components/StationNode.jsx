@@ -1,12 +1,14 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Building2, GitFork, Navigation, Flag } from 'lucide-react';
+import { Building2, GitFork, Navigation, Flag, ShieldAlert, Layers } from 'lucide-react';
 
 const StationNode = ({ data, selected }) => {
   const {
     name,
     code,
     type = 'station',
+    capacity = 4,
+    occupied = 0,
     isSource,
     isTarget,
     isOnActiveRoute,
@@ -15,8 +17,10 @@ const StationNode = ({ data, selected }) => {
 
   const isTerminal = type === 'terminal';
   const isJunction = type === 'junction';
+  const isSaturated = occupied >= capacity;
+  const isHolding = occupied > 0;
 
-  // Dynamic styling based on route state
+  // Dynamic styling based on route and occupancy state
   let borderClass = 'border-slate-700/80 bg-slate-900/90 shadow-lg';
   let badgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
 
@@ -26,13 +30,19 @@ const StationNode = ({ data, selected }) => {
   } else if (isTarget) {
     borderClass = 'border-cyan-500 bg-cyan-950/40 shadow-cyan-500/20 shadow-xl ring-2 ring-cyan-500/50';
     badgeColor = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40';
+  } else if (isSaturated) {
+    borderClass = 'border-red-500/80 bg-red-950/40 shadow-red-500/20 shadow-xl ring-1 ring-red-500/50';
+    badgeColor = 'bg-red-500/20 text-red-300 border-red-500/40';
+  } else if (isHolding) {
+    borderClass = 'border-amber-500/80 bg-amber-950/30 shadow-amber-500/20 shadow-lg ring-1 ring-amber-500/40';
+    badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
   } else if (isOnActiveRoute) {
     borderClass = 'border-emerald-500/80 bg-slate-900/95 shadow-emerald-500/10 shadow-lg ring-1 ring-emerald-500/40';
     badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
   }
 
   return (
-    <div className={`relative px-4 py-3 rounded-xl border backdrop-blur-md transition-all duration-300 min-w-[200px] ${borderClass} ${selected ? 'ring-2 ring-indigo-400' : ''}`}>
+    <div className={`relative px-4 py-3 rounded-xl border backdrop-blur-md transition-all duration-300 min-w-[210px] ${borderClass} ${selected ? 'ring-2 ring-indigo-400' : ''}`}>
       {/* Handles for connections */}
       <Handle type="target" position={Position.Left} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-slate-900" />
       <Handle type="source" position={Position.Right} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-slate-900" />
@@ -56,17 +66,20 @@ const StationNode = ({ data, selected }) => {
           </span>
         </div>
 
-        {isOnActiveRoute && routeIndex !== undefined && (
-          <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 shadow-sm animate-pulse">
-            Step {routeIndex + 1}
-          </span>
-        )}
-
-        {isSource && !isOnActiveRoute && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
-            ORIGIN
-          </span>
-        )}
+        {/* Physical Loop-Line Capacity Badge */}
+        <div
+          title={`Station physical loop line capacity: ${occupied} of ${capacity} occupied`}
+          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+            isSaturated
+              ? 'bg-red-500 text-white border-red-400 animate-pulse'
+              : isHolding
+              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+              : 'bg-slate-800 text-slate-300 border-slate-700'
+          }`}
+        >
+          <Layers className="w-3 h-3" />
+          <span>{occupied}/{capacity} Loops</span>
+        </div>
       </div>
 
       {/* Station Name */}
@@ -74,12 +87,25 @@ const StationNode = ({ data, selected }) => {
         {name}
       </div>
 
-      {/* Status Subtitle */}
-      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/80 text-[11px] text-slate-400">
-        <span className="capitalize">{type}</span>
+      {/* Status Subtitle & Gridlock Alert */}
+      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/80 text-[11px]">
+        {isSaturated ? (
+          <span className="text-[10px] font-bold text-red-400 flex items-center gap-1">
+            <ShieldAlert className="w-3 h-3 text-red-400" />
+            Gridlock Guard Active
+          </span>
+        ) : isHolding ? (
+          <span className="text-[10px] font-semibold text-amber-400 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            Holding Train ({occupied})
+          </span>
+        ) : (
+          <span className="capitalize text-slate-400">{type}</span>
+        )}
+
         <span className={`flex items-center gap-1 text-[10px] font-medium ${isOnActiveRoute ? 'text-emerald-400' : 'text-slate-500'}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${isOnActiveRoute ? 'bg-emerald-400 animate-ping' : 'bg-slate-600'}`} />
-          {isOnActiveRoute ? 'On Active Route' : 'Idle Track'}
+          {isOnActiveRoute ? 'On Primary Route' : 'Idle Track'}
         </span>
       </div>
     </div>
