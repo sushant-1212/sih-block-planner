@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Wrench,
   AlertOctagon,
@@ -11,7 +11,11 @@ import {
   RotateCcw,
   Sparkles,
   Layers,
-  ShieldAlert
+  ShieldAlert,
+  BrainCircuit,
+  Clock,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 
 const MULTI_DEPT_SCENARIOS = [
@@ -20,7 +24,7 @@ const MULTI_DEPT_SCENARIOS = [
     title: 'Tri-Department Mega-Block (GZB-ALJN)',
     subtitle: 'Track (TMS) + Signal (SMMS) + Power (TDMS)',
     color: 'border-emerald-500/50 bg-emerald-950/30 text-emerald-300',
-    edgeIds: [202, 1], // Supports both real_ir (202) and demo (1)
+    edgeIds: [202, 1],
     requests: [
       {
         id: 301,
@@ -101,6 +105,59 @@ const MULTI_DEPT_SCENARIOS = [
   }
 ];
 
+const AI_PRIORITY_TASKS = [
+  {
+    code: 'Track T-104',
+    title: 'Rail Defect (AT-Weld)',
+    department: 'Track (TMS)',
+    severity: 'CRITICAL',
+    overdueDays: 12,
+    trainImpact: 'HIGH',
+    priorityScore: 94,
+    recommendedWindow: '14:30–16:00',
+    edgeId: 202,
+    color: 'border-red-500/50 bg-red-950/30 text-red-300'
+  },
+  {
+    code: 'Signal S-221',
+    title: 'Inspection Overdue (Axle Counter)',
+    department: 'Signal (SMMS)',
+    severity: 'HIGH',
+    overdueDays: 8,
+    trainImpact: 'HIGH',
+    priorityScore: 81,
+    recommendedWindow: '14:30–16:00',
+    synergyNote: 'Can be combined with T-104',
+    edgeId: 202,
+    color: 'border-amber-500/50 bg-amber-950/30 text-amber-300'
+  },
+  {
+    code: 'Power P-309',
+    title: 'OHE Catenary Wire Slack',
+    department: 'Power (TDMS)',
+    severity: 'HIGH',
+    overdueDays: 6,
+    trainImpact: 'HIGH',
+    priorityScore: 78,
+    recommendedWindow: '14:30–16:00',
+    synergyNote: 'Can be combined with T-104',
+    edgeId: 202,
+    color: 'border-purple-500/50 bg-purple-950/30 text-purple-300'
+  },
+  {
+    code: 'Track T-108',
+    title: 'Continuous Track Tamping',
+    department: 'Track (TMS)',
+    severity: 'HIGH',
+    overdueDays: 14,
+    trainImpact: 'HIGH',
+    priorityScore: 83,
+    recommendedWindow: '11:00–12:30',
+    edgeId: 206,
+    color: 'border-amber-500/50 bg-amber-950/30 text-amber-300'
+  }
+];
+
 const ControlPanel = ({
   nodes = [],
   edges = [],
@@ -112,9 +169,11 @@ const ControlPanel = ({
   onTargetChange,
   onToggleBlock,
   onApplyScenario,
+  onOptimizeBacklog,
   onResetNetwork,
   onClearCache
 }) => {
+  const [leftTab, setLeftTab] = useState('ai_priority'); // 'ai_priority' | 'scenarios'
   const blockedSet = new Set(blockedEdgeIds);
 
   return (
@@ -163,68 +222,173 @@ const ControlPanel = ({
         </div>
       </div>
 
-      {/* Multi-Department Mega-Block Macro Triggers */}
-      <div className="p-4 border-b border-slate-800">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            Mega-Block Synthesizer
-          </h2>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-            TMS / SMMS / TDMS
-          </span>
-        </div>
-
-        <div className="space-y-2.5">
-          {MULTI_DEPT_SCENARIOS.map((sc) => {
-            const isApplied = sc.edgeIds.some((id) => blockedSet.has(id));
-
-            return (
-              <div
-                key={sc.id}
-                className={`p-3 rounded-xl border transition-all ${
-                  isApplied
-                    ? 'border-emerald-500/60 bg-emerald-950/20 shadow-md shadow-emerald-500/10'
-                    : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-100 leading-tight">
-                    {sc.title}
-                  </span>
-                </div>
-                <div className="text-[10px] text-amber-400 font-semibold mb-1">
-                  {sc.subtitle}
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed mb-2.5">
-                  {sc.description}
-                </p>
-
-                <button
-                  onClick={() => onApplyScenario(sc)}
-                  className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                    isApplied
-                      ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  }`}
-                >
-                  {isApplied ? (
-                    <>
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Re-Trigger Optimization
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-3.5 h-3.5 fill-current" />
-                      Synthesize Mega-Block
-                    </>
-                  )}
-                </button>
-              </div>
-            );
-          })}
+      {/* Segmented Control: AI Task Priority vs Macro Scenarios */}
+      <div className="p-3 border-b border-slate-800 bg-slate-950/40">
+        <div className="grid grid-cols-2 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <button
+            onClick={() => setLeftTab('ai_priority')}
+            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+              leftTab === 'ai_priority'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BrainCircuit className="w-3.5 h-3.5" />
+            AI Task Priority
+          </button>
+          <button
+            onClick={() => setLeftTab('scenarios')}
+            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+              leftTab === 'scenarios'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Mega-Blocks
+          </button>
         </div>
       </div>
+
+      {/* TAB A: AI Maintenance Priority Cards (Direct PS Match) */}
+      {leftTab === 'ai_priority' ? (
+        <div className="p-4 border-b border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <BrainCircuit className="w-4 h-4 text-amber-400" />
+              AI Maintenance Priority
+            </h2>
+            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              Top 4 Queue
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {AI_PRIORITY_TASKS.map((task) => {
+              const isCritical = task.severity === 'CRITICAL';
+              return (
+                <div
+                  key={task.code}
+                  className={`p-3 rounded-xl border text-xs transition-all ${
+                    isCritical
+                      ? 'border-red-500/50 bg-red-950/20'
+                      : 'border-amber-500/40 bg-amber-950/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-extrabold text-xs text-slate-100 font-mono">
+                      {isCritical ? '🔴' : '🟠'} {task.severity}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-bold text-slate-200">
+                      Score: {task.priorityScore}
+                    </span>
+                  </div>
+
+                  <div className="font-bold text-slate-200 text-xs mb-0.5">
+                    {task.code}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mb-2">
+                    {task.title}
+                  </div>
+
+                  <div className="space-y-1 text-[10px] font-mono text-slate-400 py-1.5 border-t border-slate-800/80">
+                    <div className="flex justify-between">
+                      <span>Overdue:</span>
+                      <strong className="text-amber-300">{task.overdueDays} days</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Train impact:</span>
+                      <strong className="text-red-400">{task.trainImpact}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Recommended:</span>
+                      <strong className="text-emerald-400">{task.recommendedWindow}</strong>
+                    </div>
+                  </div>
+
+                  {task.synergyNote && (
+                    <div className="mt-2 p-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-[10px] text-emerald-300 flex items-center gap-1 font-medium">
+                      <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>→ {task.synergyNote}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={onOptimizeBacklog}
+            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+          >
+            <Zap className="w-3.5 h-3.5 fill-slate-950" />
+            AI Auto-Schedule Backlog
+          </button>
+        </div>
+      ) : (
+        /* TAB B: Multi-Department Mega-Block Macro Triggers */
+        <div className="p-4 border-b border-slate-800">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              Mega-Block Synthesizer
+            </h2>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              TMS / SMMS / TDMS
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {MULTI_DEPT_SCENARIOS.map((sc) => {
+              const isApplied = sc.edgeIds.some((id) => blockedSet.has(id));
+
+              return (
+                <div
+                  key={sc.id}
+                  className={`p-3 rounded-xl border transition-all ${
+                    isApplied
+                      ? 'border-emerald-500/60 bg-emerald-950/20 shadow-md shadow-emerald-500/10'
+                      : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-slate-100 leading-tight">
+                      {sc.title}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-amber-400 font-semibold mb-1">
+                    {sc.subtitle}
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-2.5">
+                    {sc.description}
+                  </p>
+
+                  <button
+                    onClick={() => onApplyScenario(sc)}
+                    className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                      isApplied
+                        ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                    }`}
+                  >
+                    {isApplied ? (
+                      <>
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Re-Trigger Optimization
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        Synthesize Mega-Block
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Station Physical Loop-Line Capacity Monitor */}
       <div className="p-4 border-b border-slate-800">

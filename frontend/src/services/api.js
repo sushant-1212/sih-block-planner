@@ -92,3 +92,19 @@ export async function switchDataset(dataset = 'real_ir') {
   if (!res.ok) throw new Error(`Switch dataset failed: ${res.statusText}`);
   return res.json();
 }
+
+export async function fetchMaintenanceIntelligence() {
+  const res = await fetch(`${API_BASE}/maintenance-intelligence`);
+  if (!res.ok) throw new Error(`Fetch maintenance intelligence failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function optimizeBacklog() {
+  const res = await fetch(`${API_BASE}/optimize-backlog`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error(`Optimize backlog failed: ${res.statusText}`);
+  return res.json();
+}
+

@@ -6,6 +6,7 @@ const { findShortestRoute } = require('../engine/dijkstra');
 const { LRUCache, routeCache } = require('../cache/lruCache');
 const { MegaBlockSynthesizer } = require('../engine/megaBlockSynthesizer');
 const { ChronologicalScheduler } = require('../engine/chronologicalScheduler');
+const { MaintenanceIntelligence } = require('../engine/maintenanceIntelligence');
 
 /**
  * Helper to compute baseline route with zero blocks
@@ -69,6 +70,7 @@ router.get('/network', (req, res) => {
     const maintenance = db.getMaintenanceRequests();
     const baseline = getBaselineRoute();
     const synthesized = computeSynthesizedSchedule();
+    const maintenanceIntelligence = MaintenanceIntelligence.analyzeBacklog(edges);
 
     res.json({
       success: true,
@@ -80,6 +82,7 @@ router.get('/network', (req, res) => {
       maintenance,
       baselineRoute: baseline,
       synthesizedSchedule: synthesized,
+      maintenanceIntelligence,
       cacheStats: routeCache.getStats()
     });
   } catch (err) {
@@ -310,6 +313,66 @@ router.post('/cache-clear', (req, res) => {
     message: 'LRU Cache purged',
     stats: routeCache.getStats()
   });
+});
+
+/**
+ * GET /api/maintenance-intelligence
+ * Returns AI-prioritized defect backlog with scores (0-100) and before-vs-after metrics
+ */
+router.get('/maintenance-intelligence', (req, res) => {
+  try {
+    const edges = db.getEdges();
+    const analysis = MaintenanceIntelligence.analyzeBacklog(edges);
+    res.json({
+      success: true,
+      ...analysis
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/optimize-backlog
+ * Runs AI optimization on top backlog tasks and schedules coordinated Mega-Blocks
+ */
+router.post('/optimize-backlog', (req, res) => {
+  try {
+    const edges = db.getEdges();
+    const analysis = MaintenanceIntelligence.analyzeBacklog(edges);
+
+    // Map top priority tasks to maintenance requests for the Mega-Block Synthesizer
+    const topTasks = analysis.topPriorityTasks.map((t, idx) => ({
+      id: 700 + idx,
+      system_source: t.system_source,
+      department: t.department,
+      edge_id: t.edge_id,
+      title: `${t.code}: ${t.title}`,
+      reason: `${t.defectType} (Overdue: ${t.daysOverdue}d, Priority Score: ${t.priorityScore}/100)`,
+      startTime: 20 + idx * 5,
+      duration_mins: t.estimatedDurationMins,
+      severity: t.severity
+    }));
+
+    const synthesized = computeSynthesizedSchedule(topTasks);
+
+    // Sync active Mega-Block edges
+    const activeMegaEdges = synthesized.megaBlocks.map(mb => mb.edgeId);
+    for (const edge of db.getEdges()) {
+      db.setEdgeBlocked(edge.id, activeMegaEdges.includes(edge.id));
+    }
+
+    res.json({
+      success: true,
+      message: 'AI Backlog Optimization executed. Top safety-critical defects merged into Mega-Blocks.',
+      backlogAnalysis: analysis,
+      synthesizedSchedule: synthesized,
+      nodes: db.getNodes(),
+      blockedEdgeIds: db.getBlockedEdgeIds()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**
