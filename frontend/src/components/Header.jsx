@@ -40,10 +40,10 @@ const Header = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-extrabold text-base tracking-tight text-white flex items-center gap-2">
-              SIH RailRoute Optimizer
+              Gati Marg
             </h1>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 tracking-wider uppercase">
-              SIH26027 Mega-Block Synthesizer
+              AI Mega-Block Synthesizer
             </span>
           </div>
           <p className="text-[11px] text-slate-400">

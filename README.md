@@ -1,4 +1,4 @@
-# Railway Network Block Planner & Dynamic Rerouting Engine
+# Gati Marg: AI Railway Block Planner & Dynamic Fleet Dispatcher
 
 [![Node.js](https://img.shields.io/badge/Node.js-v20+-green.svg)](https://nodejs.org/)
 [![React Flow](https://img.shields.io/badge/React%20Flow-v12-blue.svg)](https://reactflow.dev/)

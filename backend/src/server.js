@@ -53,7 +53,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`
 ==================================================================
-  🚄 SIH Railway Block Planner & Dynamic Rerouting Engine
+  🚄 Gati Marg — AI Railway Block Planner & Fleet Dispatcher
 ==================================================================
   🌐 Unified App URL:  http://localhost:${PORT}
   📡 REST API Base:    http://localhost:${PORT}/api/network

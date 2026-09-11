@@ -1,7 +1,7 @@
-# 🚄 SIH26027: RailRoute Optimizer — Complete Team Master Documentation
+# 🚄 Gati Marg: AI Railway Block Planner & Fleet Dispatcher — Master Team Briefing
 
+> **Project Name:** Gati Marg (गति मार्ग)  
 > **Problem Statement ID:** SIH26027  
-> **Project Name:** Dynamic Railway Network Block Planner, Mega-Block Synthesizer & Anti-Gridlock Fleet Dispatcher  
 > **Target Corridor:** Indian Railways Northern (NR) & North Central Railway (NCR) High-Density Golden Quadrilateral Corridor (New Delhi to Kanpur Central)  
 > **Live Production URL:** [https://sih-block-planner-ljr2.onrender.com](https://sih-block-planner-ljr2.onrender.com)  
 > **GitHub Repository:** [https://github.com/sushant-1212/sih-block-planner](https://github.com/sushant-1212/sih-block-planner)  
